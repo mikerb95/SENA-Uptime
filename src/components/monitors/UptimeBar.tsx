@@ -41,11 +41,9 @@ export function UptimeBar({ checks, slots = 48 }: Props) {
       ))}
       {filled.map((c, i) => (
         <Tooltip key={i}>
-          <TooltipTrigger asChild>
-            <div
-              className={`h-6 flex-1 rounded-sm cursor-default transition-opacity hover:opacity-75 ${statusColor[c.status]}`}
-            />
-          </TooltipTrigger>
+          <TooltipTrigger
+            className={`h-6 flex-1 rounded-sm cursor-default transition-opacity hover:opacity-75 ${statusColor[c.status]}`}
+          />
           <TooltipContent side="top" className="text-xs">
             <p className="font-medium capitalize">
               {c.status === "UP"
