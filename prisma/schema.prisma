@@ -1,13 +1,55 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Monitor {
+  id          String   @id @default(cuid())
+  name        String
+  url         String
+  description String?
+  category    String   @default("general")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  checks    Check[]
+  incidents Incident[]
+}
+
+model Check {
+  id         String      @id @default(cuid())
+  monitorId  String
+  status     CheckStatus
+  latency    Int?        // ms
+  statusCode Int?
+  checkedAt  DateTime    @default(now())
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, checkedAt])
+}
+
+model Incident {
+  id          String    @id @default(cuid())
+  monitorId   String
+  title       String
+  description String?
+  startedAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId])
+}
+
+enum CheckStatus {
+  UP
+  DOWN
+  DEGRADED
 }
