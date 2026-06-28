@@ -1,65 +1,108 @@
-import Image from "next/image";
+import { prisma } from "@/lib/prisma";
+import { getOverallStats } from "@/lib/monitors";
+import { MonitorCard } from "@/components/monitors/MonitorCard";
+import { OverallStatus } from "@/components/monitors/OverallStatus";
+import { RefreshCw } from "lucide-react";
 
-export default function Home() {
+export const revalidate = 60;
+
+async function getMonitorsData() {
+  const monitors = await prisma.monitor.findMany({
+    where: { active: true },
+    include: {
+      checks: {
+        orderBy: { checkedAt: "desc" },
+        take: 48,
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  return monitors.map((m) => {
+    const latest = m.checks[0] ?? null;
+    const upCount = m.checks.filter((c) => c.status === "UP").length;
+    const uptimePct =
+      m.checks.length > 0
+        ? Math.round((upCount / m.checks.length) * 1000) / 10
+        : null;
+
+    return {
+      id: m.id,
+      name: m.name,
+      url: m.url,
+      description: m.description,
+      category: m.category,
+      currentStatus: latest?.status ?? null,
+      lastLatency: latest?.latency ?? null,
+      recentChecks: m.checks.map((c) => ({
+        status: c.status,
+        checkedAt: c.checkedAt,
+        latency: c.latency,
+      })),
+      uptimePct,
+    };
+  });
+}
+
+export default async function HomePage() {
+  let monitors: Awaited<ReturnType<typeof getMonitorsData>> = [];
+  let stats = { total: 0, up: 0, down: 0, degraded: 0 };
+  let hasData = false;
+
+  try {
+    [monitors, stats] = await Promise.all([
+      getMonitorsData(),
+      getOverallStats(),
+    ]);
+    hasData = monitors.length > 0;
+  } catch {
+    // DB no configurada aún
+  }
+
+  const categories = [...new Set(monitors.map((m) => m.category))];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Estado de los Servicios SENA</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          Monitoreo en tiempo real de la infraestructura digital del SENA Colombia
+        </p>
+      </div>
+
+      {!hasData ? (
+        <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground space-y-2">
+          <p className="font-medium">Aún no hay datos de monitoreo</p>
+          <p className="text-sm">
+            Configura la base de datos y ejecuta el seed para comenzar.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      ) : (
+        <>
+          <OverallStatus {...stats} />
+
+          {categories.map((cat) => {
+            const catMonitors = monitors.filter((m) => m.category === cat);
+            return (
+              <section key={cat} className="space-y-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {cat}
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {catMonitors.map((m) => (
+                    <MonitorCard key={m.id} {...m} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <RefreshCw className="h-3 w-3" />
+            Se actualiza automáticamente cada 5 minutos
+          </p>
+        </>
+      )}
     </div>
   );
 }
