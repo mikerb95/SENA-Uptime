@@ -44,8 +44,9 @@ npm install
 
 # 2. Configura el entorno
 cp .env.example .env
-#    Edita .env y pon tu DATABASE_URL real de Neon.
-#    Define también CRON_SECRET y ADMIN_SECRET con cualquier texto aleatorio.
+#    Edita .env y pon tu DATABASE_URL real de Neon y un CRON_SECRET aleatorio.
+#    Para el panel admin necesitas claves de Clerk (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+#    y CLERK_SECRET_KEY) — créalas gratis en https://clerk.com — y tu correo en ADMIN_EMAILS.
 
 # 3. Crea las tablas en tu base de datos
 npm run db:push
@@ -137,7 +138,7 @@ Toda ayuda es bienvenida. No necesitas ser experto: hay tareas de todos los nive
 
 **Avanzadas:**
 - Scraping de la oferta educativa (cupos disponibles por centro/regional).
-- Autenticación de usuarios (reemplazar el `ADMIN_SECRET` temporal).
+- Roles de administrador en Clerk (en vez de la lista blanca `ADMIN_EMAILS`).
 
 ¿Tienes otra idea? Ábrela como *issue* y la conversamos. 💚
 
@@ -149,7 +150,9 @@ Toda ayuda es bienvenida. No necesitas ser experto: hay tareas de todos los nive
 | --------------- | -------------------------------------------------------- |
 | `DATABASE_URL`  | Cadena de conexión a PostgreSQL (Neon).                  |
 | `CRON_SECRET`   | Protege el endpoint del cron `/api/cron/check`.          |
-| `ADMIN_SECRET`  | Clave temporal del panel admin (hasta tener auth real).  |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clave pública de Clerk (auth).       |
+| `CLERK_SECRET_KEY` | Clave secreta de Clerk (auth).                        |
+| `ADMIN_EMAILS`  | Correos con permiso de administrador (separados por comas). |
 
 ---
 
