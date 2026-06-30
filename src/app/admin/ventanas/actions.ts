@@ -2,39 +2,33 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
-const COOKIE = "admin_token";
 const PATH = "/admin/ventanas";
 
-/** Gate temporal hasta tener el auth real de la Fase 3. */
-export async function isAuthed(): Promise<boolean> {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
-  const token = (await cookies()).get(COOKIE)?.value;
-  return token === secret;
-}
+/**
+ * Autorización de administrador. Clerk autentica (quién eres); aquí decidimos
+ * quién puede administrar comparando el correo contra la lista blanca
+ * `ADMIN_EMAILS` (separada por comas). Más adelante puede migrarse a roles de
+ * Clerk si se necesita algo más granular.
+ */
+export async function isAdmin(): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) return false;
 
-export async function unlock(formData: FormData) {
-  const secret = String(formData.get("secret") ?? "");
-  if (secret && secret === process.env.ADMIN_SECRET) {
-    (await cookies()).set(COOKIE, secret, {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 8, // 8h
-    });
-  }
-  revalidatePath(PATH);
-}
+  const allow = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (allow.length === 0) return false;
 
-export async function logout() {
-  (await cookies()).delete(COOKIE);
-  revalidatePath(PATH);
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+  return !!email && allow.includes(email);
 }
 
 export async function createWindow(formData: FormData) {
-  if (!(await isAuthed())) return;
+  if (!(await isAdmin())) return;
 
   const monitorId = String(formData.get("monitorId") ?? "");
   const title = String(formData.get("title") ?? "").trim();
@@ -59,14 +53,14 @@ export async function createWindow(formData: FormData) {
 }
 
 export async function toggleWindow(id: string, active: boolean) {
-  if (!(await isAuthed())) return;
+  if (!(await isAdmin())) return;
   await prisma.inscriptionWindow.update({ where: { id }, data: { active } });
   revalidatePath(PATH);
   revalidatePath("/");
 }
 
 export async function deleteWindow(id: string) {
-  if (!(await isAuthed())) return;
+  if (!(await isAdmin())) return;
   await prisma.inscriptionWindow.delete({ where: { id } });
   revalidatePath(PATH);
   revalidatePath("/");

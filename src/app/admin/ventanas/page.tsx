@@ -1,13 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { windowState } from "@/lib/inscription-windows";
-import {
-  isAuthed,
-  unlock,
-  logout,
-  createWindow,
-  toggleWindow,
-  deleteWindow,
-} from "./actions";
+import { isAdmin, createWindow, toggleWindow, deleteWindow } from "./actions";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Lock, CalendarPlus, Trash2 } from "lucide-react";
@@ -24,33 +17,15 @@ const STATE_LABEL: Record<string, string> = {
 };
 
 export default async function AdminVentanasPage() {
-  const authed = await isAuthed();
-
-  if (!authed) {
+  // El middleware ya garantiza que hay sesión; aquí validamos el permiso de admin.
+  if (!(await isAdmin())) {
     return (
-      <div className="max-w-sm mx-auto space-y-4">
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <Lock className="h-5 w-5 text-muted-foreground" />
-          Panel de administración
-        </h1>
-        <form action={unlock} className="space-y-3">
-          <input
-            type="password"
-            name="secret"
-            placeholder="Clave de administrador"
-            className={inputCls}
-            autoFocus
-          />
-          <button
-            type="submit"
-            className="w-full rounded-md bg-foreground text-background py-2 text-sm font-medium hover:opacity-90"
-          >
-            Entrar
-          </button>
-        </form>
-        <p className="text-xs text-muted-foreground">
-          Protección temporal con <code>ADMIN_SECRET</code> hasta el auth de la
-          Fase 3.
+      <div className="max-w-sm mx-auto space-y-3 text-center py-10">
+        <Lock className="h-6 w-6 text-muted-foreground mx-auto" />
+        <h1 className="text-xl font-bold">Acceso restringido</h1>
+        <p className="text-sm text-muted-foreground">
+          Tu cuenta no tiene permisos de administrador. Si crees que deberías
+          tenerlos, pide que agreguen tu correo a <code>ADMIN_EMAILS</code>.
         </p>
       </div>
     );
@@ -70,20 +45,13 @@ export default async function AdminVentanasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Ventanas de inscripción
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gestiona los periodos de inscripción que se auditan en tiempo real.
-          </p>
-        </div>
-        <form action={logout}>
-          <button className="text-xs text-muted-foreground hover:text-foreground">
-            Salir
-          </button>
-        </form>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Ventanas de inscripción
+        </h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          Gestiona los periodos de inscripción que se auditan en tiempo real.
+        </p>
       </div>
 
       <section className="rounded-xl border p-5 space-y-4">
