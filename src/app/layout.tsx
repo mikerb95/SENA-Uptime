@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, UserButton } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
@@ -41,9 +41,7 @@ export default function RootLayout({
                 <Link href="/reportes" className="hover:text-foreground transition-colors">
                   Reportes
                 </Link>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
+                <UserButton />
               </nav>
             </div>
           </header>
