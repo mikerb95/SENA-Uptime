@@ -48,6 +48,25 @@ model Incident {
   @@index([monitorId])
 }
 
+/// Ventana de inscripción de un servicio del SENA (p.ej. Sofía Plus).
+/// Permite auditar la disponibilidad de la plataforma justamente cuando
+/// la comunidad la necesita: durante los periodos de inscripción.
+model InscriptionWindow {
+  id        String   @id @default(cuid())
+  monitorId String
+  title     String
+  opensAt   DateTime
+  closesAt  DateTime
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId])
+  @@index([opensAt, closesAt])
+}
+
 enum CheckStatus {
   UP
   DOWN
