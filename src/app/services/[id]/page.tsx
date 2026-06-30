@@ -157,6 +157,52 @@ export default async function ServicePage({ params }: Props) {
         </CardContent>
       </Card>
 
+      {windows.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold">
+            Disponibilidad durante inscripciones
+          </h2>
+          <div className="space-y-2">
+            {windows.map((w) => {
+              const pct = w.uptime?.uptimePct ?? null;
+              const color =
+                pct === null
+                  ? "text-muted-foreground"
+                  : pct >= 99
+                  ? "text-emerald-600"
+                  : pct >= 95
+                  ? "text-amber-600"
+                  : "text-red-600";
+              return (
+                <div
+                  key={w.id}
+                  className="rounded-lg border p-4 text-sm flex items-center justify-between gap-4"
+                >
+                  <div>
+                    <p className="font-medium">{w.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(w.opensAt), "d MMM", { locale: es })} →{" "}
+                      {format(new Date(w.closesAt), "d MMM yyyy", { locale: es })}
+                      {w.state === "open" && " · abierta"}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`text-xl font-bold tabular-nums ${color}`}>
+                      {pct !== null ? `${pct.toFixed(1)}%` : "—"}
+                    </p>
+                    {w.uptime && w.uptime.totalChecks > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        {w.uptime.downChecks} caídas / {w.uptime.totalChecks} chequeos
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {monitor.incidents.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold">Incidentes recientes</h2>
