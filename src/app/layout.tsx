@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider, SignedIn, UserButton } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
@@ -20,9 +21,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es">
-      <body className={`${geist.className} min-h-screen bg-background text-foreground antialiased`}>
-        <TooltipProvider>
+    <ClerkProvider>
+      <html lang="es">
+        <body className={`${geist.className} min-h-screen bg-background text-foreground antialiased`}>
+          <TooltipProvider>
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
             <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2 font-bold text-base">
@@ -39,6 +41,9 @@ export default function RootLayout({
                 <Link href="/reportes" className="hover:text-foreground transition-colors">
                   Reportes
                 </Link>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
               </nav>
             </div>
           </header>
@@ -58,7 +63,8 @@ export default function RootLayout({
             </a>
           </footer>
         </TooltipProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
