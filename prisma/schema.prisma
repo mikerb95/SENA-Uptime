@@ -16,8 +16,9 @@ model Monitor {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  checks    Check[]
-  incidents Incident[]
+  checks             Check[]
+  incidents          Incident[]
+  inscriptionWindows InscriptionWindow[]
 }
 
 model Check {
