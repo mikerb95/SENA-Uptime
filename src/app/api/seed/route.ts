@@ -14,5 +14,26 @@ export async function POST() {
     data: SENA_SERVICES,
   });
 
-  return NextResponse.json({ created: monitors.count });
+  // Ventana de inscripción de ejemplo, abierta ahora, atada a Sofía Plus.
+  const sofia = await prisma.monitor.findFirst({
+    where: { name: "Sofía Plus" },
+  });
+
+  let windows = 0;
+  if (sofia) {
+    const now = new Date();
+    const opensAt = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // hace 2 días
+    const closesAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000); // en 5 días
+    await prisma.inscriptionWindow.create({
+      data: {
+        monitorId: sofia.id,
+        title: "Inscripciones 2026-2 — Tecnólogos",
+        opensAt,
+        closesAt,
+      },
+    });
+    windows = 1;
+  }
+
+  return NextResponse.json({ created: monitors.count, windows });
 }
