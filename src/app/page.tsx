@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getOverallStats } from "@/lib/monitors";
+import { getOpenInscriptionWindows } from "@/lib/inscription-windows";
 import { MonitorCard } from "@/components/monitors/MonitorCard";
 import { OverallStatus } from "@/components/monitors/OverallStatus";
+import { InscriptionWindows } from "@/components/monitors/InscriptionWindows";
 import { RefreshCw } from "lucide-react";
 
 export const revalidate = 60;
