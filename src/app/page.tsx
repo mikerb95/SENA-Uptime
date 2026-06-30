@@ -85,6 +85,8 @@ export default async function HomePage() {
         <>
           <OverallStatus {...stats} />
 
+          <InscriptionWindows windows={windows} />
+
           {categories.map((cat) => {
             const catMonitors = monitors.filter((m) => m.category === cat);
             return (
