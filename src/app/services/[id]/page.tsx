@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getWindowUptime, windowState } from "@/lib/inscription-windows";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/monitors/StatusBadge";
 import { StatusDot } from "@/components/monitors/StatusDot";
@@ -33,6 +34,20 @@ export default async function ServicePage({ params }: Props) {
   });
 
   if (!monitor) notFound();
+
+  // Auditoría de disponibilidad durante las ventanas de inscripción.
+  const windowRecords = await prisma.inscriptionWindow.findMany({
+    where: { monitorId: monitor.id },
+    orderBy: { opensAt: "desc" },
+    take: 5,
+  });
+  const windows = await Promise.all(
+    windowRecords.map(async (w) => ({
+      ...w,
+      state: windowState(w),
+      uptime: await getWindowUptime(w.id),
+    }))
+  );
 
   const latest = monitor.checks[0] ?? null;
   const checks24h = monitor.checks.slice(0, 288);
