@@ -49,12 +49,14 @@ async function getMonitorsData() {
 export default async function HomePage() {
   let monitors: Awaited<ReturnType<typeof getMonitorsData>> = [];
   let stats = { total: 0, up: 0, down: 0, degraded: 0 };
+  let windows: Awaited<ReturnType<typeof getOpenInscriptionWindows>> = [];
   let hasData = false;
 
   try {
-    [monitors, stats] = await Promise.all([
+    [monitors, stats, windows] = await Promise.all([
       getMonitorsData(),
       getOverallStats(),
+      getOpenInscriptionWindows(),
     ]);
     hasData = monitors.length > 0;
   } catch {
